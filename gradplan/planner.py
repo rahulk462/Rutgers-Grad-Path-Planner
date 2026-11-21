@@ -12,7 +12,7 @@ from .codes import Term
 from .graph import depth
 from .programs import Program, load_programs
 from .schedule import Plan, Prefs, cpsat, greedy
-from .selection import Selection, select
+from .selection import HAVE_ORTOOLS, Selection, select
 from .soc import Catalog, Equivalents, load_pack
 from .validate import Report, validate
 
@@ -127,6 +127,11 @@ def run(ctx: Context, program_ids: list[str] | None = None, solver: str | None =
     g = greedy(courses, ctx.catalog, ctx.done, ctx.prefs)
     solver = solver or plan_cfg.get("solver", "cpsat")
     plan = g
+    if not HAVE_ORTOOLS:
+        if solver == "cpsat":
+            g.notes.append("OR-Tools isn't installed, so this plan uses the greedy scheduler and a heuristic "
+                           "course selection. Install ortools (Python 3.10-3.13 recommended) for optimal plans.")
+        solver = "greedy"
     if solver == "cpsat":
         c = cpsat(courses, ctx.catalog, ctx.done, ctx.prefs, time_limit=time_limit, hint=g)
         if c.placement or not courses:

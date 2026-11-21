@@ -10,7 +10,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ortools.sat.python import cp_model
+try:
+    from ortools.sat.python import cp_model
+except ImportError:          # greedy() still works; cpsat() reports that it can't run
+    cp_model = None
 
 from .codes import Term, term_range
 from .graph import coreq_codes, heights, plan_edges
@@ -197,6 +200,9 @@ def cpsat(courses: list[str], catalog: Catalog, done: set[str], prefs: Prefs,
           time_limit: float = 60.0, hint: Plan | None = None) -> Plan:
     terms = prefs.terms()
     T = len(terms)
+    if cp_model is None:
+        return Plan(terms=terms, placement={}, unscheduled=sorted(courses), method="cp-sat",
+                    status="unavailable", notes=["CP-SAT needs the ortools package, which isn't installed"])
     m = cp_model.CpModel()
     sel = set(courses)
     cr = {c: int(round(_credits(catalog, c) * 2)) for c in courses}     # half-credit units

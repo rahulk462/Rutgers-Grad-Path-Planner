@@ -11,9 +11,36 @@ which courses are on the critical path.
 
 ## Run it in your browser
 
+### One-time setup (Mac)
+
+The optimizer (Google OR-Tools) only publishes packages for some Python versions, so use
+Python 3.12 in a virtual environment. With [Homebrew](https://brew.sh):
+
 ```bash
-pip install -r requirements.txt           # once: ortools, pyyaml (pytest for tests)
-python -m gradplan serve                  # opens http://localhost:8000
+brew install python@3.12
+cd ~/Rutgers-Grad-Path-Planner
+python3.12 -m venv .venv                  # creates .venv/ (ignored by git)
+source .venv/bin/activate                 # your prompt now starts with (.venv)
+pip install -e ".[solver]"                # pyyaml + ortools, and the `gradplan` command
+```
+
+(No Homebrew? Install Python 3.12 from python.org, or with [uv](https://docs.astral.sh/uv/):
+`uv venv --python 3.12 .venv`, `source .venv/bin/activate`, then `uv pip install -e ".[solver]"`.)
+
+If `pip` says *No matching distribution found for ortools*, your venv's Python is one OR-Tools
+doesn't support yet (check with `python --version`). Either recreate `.venv` with 3.12 as above,
+or run `pip install -e .` to install without it: the planner still works, using a heuristic course
+selection and the greedy scheduler, and says so on every plan.
+
+If you see `Multiple top-level packages discovered` or `No module named 'yaml'`, `git pull` first
+(older checkouts had a packaging bug) and make sure the venv is active.
+
+### Every time
+
+```bash
+cd ~/Rutgers-Grad-Path-Planner
+source .venv/bin/activate
+gradplan serve                            # or: python -m gradplan serve
 ```
 
 That starts a small local web server (Python standard library, nothing else to install) and opens
@@ -40,7 +67,7 @@ file** goes back to the YAML. Options: `--port 8080`, `--config config/me.yaml`,
 ## Command line
 
 ```bash
-pip install -r requirements.txt          # ortools, pyyaml (pytest for tests)
+pip install -e ".[solver,dev]"          # inside the .venv above; adds pytest
 python -m gradplan plan                   # uses config/example.yaml and a made-up sample transcript
 open out/plan.html                        # term-by-term view; also out/plan.csv and out/plan.json
 python -m gradplan whatif                 # Math+CS vs adding Statistics, etc.
@@ -66,7 +93,7 @@ python -m gradplan plan --config config/whatif-scraper.yaml
 | DAG | `graph.py` | Chain depth (longest prerequisite chain below a course, total and remaining), which planned courses each course relies on, cycle detection. |
 | Transcript | `transcript.py` | Degree Navigator export (JSON or SQLite), manual AP/transfer list, or CSV. In-progress courses are assumed passed (and reported). |
 | Requirements | `programs.py`, `programs/*.yaml` | Rule types: `required`, `choose` (N from a list or pattern, with min/max sub-rules), `credits` (minimum credits), `level` (N courses at 300+), `one_set` (any one sequence). Double counting: one requirement per course inside a program; caps between programs. |
-| Course selection | `selection.py` | CP-SAT picks which electives to take: every requirement met, prerequisites closed over, fewest new credits, avoiding rarely-offered courses and deep chains, and sharing courses between programs where allowed. |
+| Course selection | `selection.py`, `heuristic.py` | CP-SAT picks which electives to take: every requirement met, prerequisites closed over, fewest new credits, avoiding rarely-offered courses and deep chains, and sharing courses between programs where allowed. Without OR-Tools, `heuristic.py` fills each requirement greedily instead. |
 | Scheduling | `schedule.py` | **Greedy** topological scheduler (each term: courses whose prerequisites are done and that are offered, ranked by how long a chain builds on them, until the credit cap) and a **CP-SAT** scheduler that minimises terms to graduation (or balances workload) subject to prerequisites, offering terms, credit caps, locked courses and a hard-course limit. Open "elective / SAS Core" credits fill each term to the minimum and the degree to 120. |
 | Validation | `validate.py` | Re-checks the finished plan from scratch: prerequisites, offerings, caps, locks, every requirement. Computes each course's slack (how many offerings it could slip without moving graduation). Zero slack = critical path; flagged as a risk when the course runs only once a year. |
 | What-if | `whatif.py` | Plans several program combinations and compares graduation term, extra terms, new courses/credits, and how many courses count toward more than one program. |

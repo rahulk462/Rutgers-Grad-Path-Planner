@@ -169,7 +169,15 @@ def main(argv=None) -> int:
     p.set_defaults(fn=cmd_programs)
 
     args = ap.parse_args(argv)
-    return args.fn(args)
+    try:
+        return args.fn(args)
+    except ModuleNotFoundError as e:
+        if e.name in ("yaml", "ortools"):
+            print(f"Missing Python package {e.name!r}. From the repo folder run:\n"
+                  "    python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt\n"
+                  "then try again (activate the venv in every new terminal).", file=sys.stderr)
+            return 1
+        raise
 
 
 if __name__ == "__main__":

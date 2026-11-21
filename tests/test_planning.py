@@ -9,9 +9,11 @@ from gradplan.graph import depth
 from gradplan.programs import Program, Requirement, Rule
 from gradplan.prereqs import satisfied
 from gradplan.schedule import Plan, Prefs, cpsat, greedy
-from gradplan.selection import audit, select
+from gradplan.selection import HAVE_ORTOOLS, audit, select
 from gradplan.soc import Offering
 from gradplan.validate import validate
+
+needs_ortools = pytest.mark.skipif(not HAVE_ORTOOLS, reason="CP-SAT needs ortools")
 
 
 def prog(pid, *reqs, **kw):
@@ -97,7 +99,7 @@ def _prefs(**kw):
 CHAIN = ["01:198:101", "01:198:102", "01:198:201", "01:198:301", "01:198:302", "01:198:330"]
 
 
-@pytest.mark.parametrize("scheduler", [greedy, cpsat])
+@pytest.mark.parametrize("scheduler", [greedy, pytest.param(cpsat, marks=needs_ortools)])
 def test_schedulers_respect_constraints(toy_catalog, scheduler):
     prefs = _prefs(max_credits=8, locked={"01:198:330": Term(2028, 1)})
     plan = scheduler(CHAIN, toy_catalog, set(), prefs)
@@ -112,6 +114,7 @@ def test_schedulers_respect_constraints(toy_catalog, scheduler):
     assert {"01:198:301", "01:198:302"} <= set(rep.critical)
 
 
+@needs_ortools
 def test_cpsat_not_worse_than_greedy(toy_catalog):
     prefs = _prefs(max_credits=8)
     g = greedy(CHAIN, toy_catalog, set(), prefs)
@@ -119,6 +122,7 @@ def test_cpsat_not_worse_than_greedy(toy_catalog):
     assert c.last_term() <= g.last_term()
 
 
+@needs_ortools
 def test_fillers_reach_total(toy_catalog):
     prefs = _prefs(max_credits=18, min_credits=12, total_required=40, fill_electives=True)
     plan = cpsat(["01:198:101", "01:198:102"], toy_catalog, set(), prefs)

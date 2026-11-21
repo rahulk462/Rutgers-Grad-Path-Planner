@@ -19,7 +19,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ortools.sat.python import cp_model
+try:
+    from ortools.sat.python import cp_model
+    HAVE_ORTOOLS = True
+except ImportError:          # no wheel for this Python yet: fall back to heuristic.py
+    cp_model = None
+    HAVE_ORTOOLS = False
 
 from .codes import matches, number
 from .graph import depth
@@ -260,6 +265,19 @@ def select(programs: list[Program], catalog: Catalog, done: set[str], *, exclude
            time_limit: float = 30.0, candidates: set[str] | None = None) -> Selection:
     if candidates is None:
         candidates = candidate_pool(programs, catalog, done, set(exclude), set(include))
+    if not HAVE_ORTOOLS:
+        from .heuristic import select_heuristic
+        dflt = programs[0].default_credits if programs else 3
+        fdone = frozenset(done)
+
+        def costfn(c):
+            w = round(catalog.get(c, dflt).credits) * 10 + rarity_penalty(catalog, c) + 2 * depth(catalog, c, fdone)
+            if c in prefer:
+                w -= 15
+            if any(matches(c, a) for a in avoid):
+                w += 60
+            return w
+        return select_heuristic(programs, catalog, done, set(candidates), set(include), policies, costfn)
     b = _Builder(programs, catalog, done, candidates, policies)
     b.build()
     m = b.m

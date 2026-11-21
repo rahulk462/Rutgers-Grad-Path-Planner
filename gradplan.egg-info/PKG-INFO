@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: gradplan
+Version: 0.1.0
+Summary: Rutgers semester-by-semester graduation planner
+Requires-Python: >=3.10
+Requires-Dist: pyyaml>=6
+Provides-Extra: solver
+Requires-Dist: ortools>=9.10; extra == "solver"
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"

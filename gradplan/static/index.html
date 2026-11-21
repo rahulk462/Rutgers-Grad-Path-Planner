@@ -281,7 +281,7 @@ async function load(configName) {
   $('recordHint').textContent = `${S.student.taken.length} courses on record, ${fmt(S.student.credits_earned)} credits earned` +
     (files.length ? ` · ${found}/${files.length} transcript files found` : '') + (saved ? ' · using your last settings' : '');
   renderRecord();
-  setStatus('Ready');
+  setStatus(S.cpsat_available ? 'Ready' : 'Ready · OR-Tools not installed, using the greedy planner');
 }
 
 function fromConfig() {
@@ -312,6 +312,10 @@ function applyState(st) {
     el.value = v || (k === 'offering_threshold' ? '0.5' : k === 'solver' ? 'cpsat' : k === 'objective' ? 'min_terms' : '');
   }
   if (!p.start_term) $('start_term').value = 'Spring 2027';
+  const cp = $('solver').querySelector('option[value=cpsat]');
+  cp.disabled = !S.cpsat_available;
+  cp.textContent = S.cpsat_available ? 'CP-SAT (optimal)' : 'CP-SAT (install ortools)';
+  if (!S.cpsat_available) $('solver').value = 'greedy';
   chips = {}; for (const k of CHIPS) chips[k] = (p[k] || []).map(String);
   locks = Object.entries(p.locked || {}).map(([code, term]) => ({code, term}));
   scenarios = (st.scenarios || []).map(s => ({name: s.name, programs: s.programs.slice()}));
