@@ -9,7 +9,35 @@ which courses are on the critical path.
 > rules and double-counting policies vary by school: check them in the catalog or with the dean's
 > office. Offering patterns are estimated from past terms and are a guess, not a guarantee.
 
-## Quick start
+## Run it in your browser
+
+```bash
+pip install -r requirements.txt           # once: ortools, pyyaml (pytest for tests)
+python -m gradplan serve                  # opens http://localhost:8000
+```
+
+That starts a small local web server (Python standard library, nothing else to install) and opens
+**http://localhost:8000** in your browser. Press Ctrl+C in the terminal to stop it. If port 8000 is
+busy it uses the next free one and prints the address. It only listens on your own computer.
+
+In the page you can:
+
+- pick a config (your What-If Scraper record is `whatif-scraper`; `example` uses a made-up transcript)
+  and see what the planner counts as done under **My record**;
+- tick the majors and minors to plan, and set the first term, target graduation, min/max credits,
+  summer and winter sessions (with their caps), courses locked to a term, hard courses to spread out,
+  and courses to include, exclude or avoid;
+- press **Build plan** (or Cmd+Enter) to see the term-by-term plan, then the **Critical path**,
+  **Checks** (validation errors and risks) and **Requirements** tabs; click a course for its
+  prerequisites and slack;
+- edit scenarios under **What-if** and press **Compare what-ifs**; click a row to open that plan;
+- download the plan as CSV, JSON or a text report.
+
+Your settings are remembered in the browser per config; **More options → Reset to the config
+file** goes back to the YAML. Options: `--port 8080`, `--config config/me.yaml`, `--no-browser`,
+`--time-limit 30` (CP-SAT seconds per plan).
+
+## Command line
 
 ```bash
 pip install -r requirements.txt          # ortools, pyyaml (pytest for tests)
@@ -43,6 +71,7 @@ python -m gradplan plan --config config/whatif-scraper.yaml
 | Validation | `validate.py` | Re-checks the finished plan from scratch: prerequisites, offerings, caps, locks, every requirement. Computes each course's slack (how many offerings it could slip without moving graduation). Zero slack = critical path; flagged as a risk when the course runs only once a year. |
 | What-if | `whatif.py` | Plans several program combinations and compares graduation term, extra terms, new courses/credits, and how many courses count toward more than one program. |
 | Output | `export.py` | Text report, CSV, JSON, and a single-file HTML page. |
+| Web UI | `web.py`, `static/index.html` | Local server (`gradplan serve`) with a JSON API (`/api/setup`, `/api/plan`, `/api/whatif`) and a one-page app that edits preferences and runs plans and what-ifs. |
 
 ## Your preferences (`config/*.yaml`)
 
@@ -82,6 +111,7 @@ python -m gradplan whatif [--scenario "CS only=cs-bs" --scenario "CS+Stat=cs-bs,
 python -m gradplan prereqs 01:198:344 01:960:382   # parsed tree, chain depth, offering pattern
 python -m gradplan prereqs --flagged               # prerequisites that need a manual fix
 python -m gradplan programs                        # list requirement files
+python -m gradplan serve [--port 8000] [--config ...]   # web UI on http://localhost:8000
 python -m gradplan soc "Fall 2027" "Spring 2028" --subjects 01:198 01:640 01:960   # add terms to the pack
 ```
 

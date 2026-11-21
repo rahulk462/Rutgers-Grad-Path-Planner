@@ -112,6 +112,12 @@ def cmd_programs(args):
     return 0
 
 
+def cmd_serve(args):
+    from .web import serve
+    serve(args.host, args.port, args.config, not args.no_browser, args.time_limit)
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="gradplan", description="Rutgers semester-by-semester graduation planner")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -150,6 +156,14 @@ def main(argv=None) -> int:
     p.add_argument("--subjects", nargs="*", help="e.g. 01:198 01:640 (default: all)")
     p.add_argument("--out")
     p.set_defaults(fn=cmd_soc)
+
+    p = sub.add_parser("serve", help="start the web UI on http://localhost:8000")
+    p.add_argument("--port", type=int, default=8000)
+    p.add_argument("--host", default="127.0.0.1", help="address to listen on (default: this computer only)")
+    p.add_argument("--config", help="plan config to select first (default: config/whatif-scraper.yaml)")
+    p.add_argument("--no-browser", action="store_true", help="don't open a browser tab")
+    p.add_argument("--time-limit", type=float, default=30.0, help="CP-SAT seconds per plan")
+    p.set_defaults(fn=cmd_serve)
 
     p = sub.add_parser("programs", help="list program definitions")
     p.set_defaults(fn=cmd_programs)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import html
+import io
 import json
 from pathlib import Path
 
@@ -39,15 +40,21 @@ def rows(r: Result) -> list[dict]:
     return out
 
 
-def to_csv(r: Result, path: Path) -> Path:
-    data = rows(r)
-    fields = ["term", "code", "title", "credits", "counts_toward", "offered", "critical",
+CSV_FIELDS = ["term", "code", "title", "credits", "counts_toward", "offered", "critical",
               "slack_offerings", "next_offered_if_missed", "chain_depth", "hard", "prerequisites"]
-    with Path(path).open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=fields)
-        w.writeheader()
-        for row in data:
-            w.writerow({k: row.get(k, "") for k in fields})
+
+
+def csv_text(r: Result) -> str:
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=CSV_FIELDS, lineterminator="\n")
+    w.writeheader()
+    for row in rows(r):
+        w.writerow({k: row.get(k, "") for k in CSV_FIELDS})
+    return buf.getvalue()
+
+
+def to_csv(r: Result, path: Path) -> Path:
+    Path(path).write_text(csv_text(r))
     return Path(path)
 
 

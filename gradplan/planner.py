@@ -58,7 +58,11 @@ def load_context(config_path: Path | str, overrides: dict | None = None) -> Cont
     for k, v in (overrides or {}).items():
         if v is not None:
             cfg.setdefault("plan", {})[k] = v
-    base = config_path.parent
+    return context_from_config(cfg, config_path.parent)
+
+
+def context_from_config(cfg: dict, base: Path) -> Context:
+    """Build a Context from an already-read config dict; relative paths resolve against `base`."""
     eq_file = _path(base, cfg.get("equivalents", str(ROOT / "config" / "equivalents.yaml")))
     groups = [g["codes"] for g in (yaml.safe_load(eq_file.read_text()) or {}).get("groups", [])] if eq_file.exists() else []
     eq = Equivalents(groups)
