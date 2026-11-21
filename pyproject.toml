@@ -1,0 +1,12 @@
+[project]
+name = "gradplan"
+version = "0.1.0"
+description = "Rutgers semester-by-semester graduation planner"
+requires-python = ">=3.10"
+dependencies = ["ortools>=9.10", "pyyaml>=6"]
+
+[project.scripts]
+gradplan = "gradplan.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
