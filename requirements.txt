@@ -1,3 +1,3 @@
-ortools>=9.10
 pyyaml>=6
+ortools>=9.10   # optional; drop this line if pip can't find it for your Python
 pytest>=8

@@ -25,6 +25,7 @@ import yaml
 from . import export
 from .codes import SEASON_ORDER, Term
 from .planner import ROOT, context_from_config, run
+from .selection import HAVE_ORTOOLS
 
 STATIC = Path(__file__).resolve().parent / "static"
 CONFIG_DIR = ROOT / "config"
@@ -160,6 +161,7 @@ class App:
             "double_counting": cfg.get("double_counting", {}) or {},
             "student": {"credits_earned": ctx.prefs.credits_earned, "taken": taken, "files": files},
             "terms": term_choices(),
+            "cpsat_available": HAVE_ORTOOLS,
             "courses": sorted(({"code": c.code, "title": c.title, "credits": c.credits}
                                for c in cat.courses.values()), key=lambda d: d["code"]),
         }

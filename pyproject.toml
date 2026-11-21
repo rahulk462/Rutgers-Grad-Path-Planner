@@ -1,15 +1,28 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "gradplan"
 version = "0.1.0"
 description = "Rutgers semester-by-semester graduation planner"
 requires-python = ">=3.10"
-dependencies = ["ortools>=9.10", "pyyaml>=6"]
+dependencies = ["pyyaml>=6"]
+
+[project.optional-dependencies]
+# CP-SAT course selection and scheduling. Without it the planner falls back to a heuristic
+# selection and the greedy scheduler. ortools publishes wheels for Python 3.10-3.14.
+solver = ["ortools>=9.10"]
+dev = ["pytest>=8"]
 
 [project.scripts]
 gradplan = "gradplan.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["gradplan"]
 
 [tool.setuptools.package-data]
 gradplan = ["static/*.html"]
